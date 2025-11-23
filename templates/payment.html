@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Payment</title>
+<style>
+    body { font-family: Arial; background-color: #111; color: white; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #1c1c1c; padding: 20px; border-radius: 10px; }
+    h1 { color: #ffcc00; text-align: center; }
+    p { font-size: 18px; margin: 10px 0; }
+    .btn { display: block; width: 100%; padding: 12px; background-color: #ffcc00; color: black; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; margin-top: 20px; }
+    .btn:hover { background-color: #ffd633; }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Payment Page</h1>
+
+    <p><strong>Movie:</strong> {{ movie['title'] }}</p>
+    <p><strong>Showtime:</strong> {{ showtime['date'] }} - {{ showtime['timeslot'] }}</p>
+    <p><strong>Seats:</strong> {{ seats | join(', ') }}</p>
+    <p><strong>Total: Rs{{ movie['price'] * seats|length }}</strong></p>
+
+    <h3>User Details:</h3>
+    <p><strong>Name:</strong> {{ user_name }}</p>
+    <p><strong>Email:</strong> {{ user_email }}</p>
+    <p><strong>Phone:</strong> {{ user_phone }}</p>
+
+    <button class="btn" onclick="window.location.href='/'">Pay Now</button>
+</div>
+</body>
+</html>
