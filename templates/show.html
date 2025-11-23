@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Book Tickets</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #111;
+        color: white;
+        padding: 20px;
+    }
+
+    h1 {
+        color: #ffcc00;
+        text-shadow: 1px 1px 2px black;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    form {
+        max-width: 700px;
+        margin: 0 auto;
+        background-color: #1c1c1c;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px #000;
+    }
+
+    label {
+        display: block;
+        margin-top: 15px;
+        font-weight: bold;
+    }
+
+    select, input[type="text"], input[type="email"] {
+        width: 100%;
+        padding: 8px;
+        margin-top: 5px;
+        border-radius: 5px;
+        border: none;
+        outline: none;
+    }
+
+    h3 {
+        margin-top: 25px;
+        margin-bottom: 10px;
+        color: #ffcc00;
+    }
+
+    .seat {
+        width: 35px;
+        height: 35px;
+        border: 1px solid #ccc;
+        display: inline-block;
+        margin: 5px;
+        text-align: center;
+        line-height: 35px;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: 0.2s;
+        background-color: #333;
+    }
+
+    .seat:hover {
+        transform: scale(1.1);
+    }
+
+    .selected {
+        background-color: #00cc66;
+    }
+
+    .booked {
+        background-color: red;
+        cursor: not-allowed;
+    }
+
+    .row {
+        display: flex;
+        justify-content: center;
+    }
+
+    .screen {
+        background-color: #ffcc00;
+        color: black;
+        text-align: center;
+        padding: 8px;
+        margin-top: 20px;
+        border-radius: 5px;
+        font-weight: bold;
+    }
+
+    button {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        margin-top: 25px;
+        background-color: #ffcc00;
+        border: none;
+        color: black;
+        font-weight: bold;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    button:hover {
+        background-color: #ffd633;
+    }
+
+</style>
+</head>
+<body>
+
+<h1>Book Tickets for {{ movie['title'] }}</h1>
+
+
+<form action="/book" method="POST">
+    <input type="hidden" name="movie_id" value="{{ movie['id'] }}">
+    <p><b>Ticket Price: Rs{{ movie['price'] }}</b></p>
+    <label for="showtime">Select Showtime:</label>
+    <select name="showtime_id" id="showtime" required>
+        <option value="" disabled selected>Select date & time</option>
+        {% for st in showtimes %}
+            <option value="{{ st['id'] }}">{{ st['date'] }} - {{ st['timeslot'] }}</option>
+        {% endfor %}
+    </select>
+
+    <h3>Seats:</h3>
+    <div id="seatContainer">
+        <p style="text-align:center;">Please select a showtime above to view available seats.</p>
+    </div>
+
+    <input type="hidden" id="selectedSeats" name="seats">
+
+    <h3>User Details</h3>
+    <label>Name:</label>
+    <input type="text" name="user_name" required>
+    
+    <label>Email:</label>
+    <input type="email" name="user_email" required>
+    
+    <label>Phone:</label>
+    <input type="text" name="user_phone" required>
+
+    <button type="submit">Book Now</button>
+</form>
+
+<script>
+let selectedSeats = [];
+
+function toggleSeat(div, seatNum) {
+    if(div.classList.contains('booked')) return;
+    if(selectedSeats.includes(seatNum)){
+        div.classList.remove('selected');
+        selectedSeats = selectedSeats.filter(s => s !== seatNum);
+    } else {
+        div.classList.add('selected');
+        selectedSeats.push(seatNum);
+    }
+    document.getElementById('selectedSeats').value = selectedSeats.join(',');
+}
+
+// Load seats dynamically when showtime changes
+document.getElementById("showtime").addEventListener("change", function(){
+    let showtimeId = this.value;
+    selectedSeats = [];
+    document.getElementById('selectedSeats').value = "";
+
+    fetch(`/get_seats/${showtimeId}`)
+    .then(resp => resp.json())//resp is the response object from flask after the http request
+    .then(data => {
+        let seatHTML = ''; //a string that has all the seat data
+        const rows = ['A','B','C','D','E','F'];
+        const cols = 8;
+        rows.forEach(r => {
+            seatHTML += '<div class="row">';//creates separate rows 
+            for(let c=1;c<=cols;c++){
+                let seatNum = r + c; //gets the seat data like A1
+                let seat = data.find(s => s.seat_number === seatNum); //find matching seats from 'data' fetched 
+                if(seat){
+                    if(seat.available === 1){
+                        seatHTML += `<div class="seat" onclick="toggleSeat(this,'${seatNum}')">${seatNum}</div>`;
+                    } else {
+                        seatHTML += `<div class="seat booked">${seatNum}</div>`;//seat booked and not clickable
+                    }
+                } else {
+                    seatHTML += `<div class="seat">${seatNum}</div>`;
+                }//just in case there is no seat data
+            }
+            seatHTML += '</div>';
+        });
+        seatHTML += '<div class="screen">Screen this way</div>';
+        document.getElementById('seatContainer').innerHTML = seatHTML;
+    });
+});
+</script>
+
+</body>
+</html>
